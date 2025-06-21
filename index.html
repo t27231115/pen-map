@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>商品検索マップ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet地図ライブラリ -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #map { height: 400px; margin-top: 10px; }
+    #results div { margin: 10px 0; padding: 5px; border-bottom: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+
+<h1>商品検索マップ</h1>
+
+<input type="text" id="query" placeholder="例：黒いボールペン" size="30">
+<button onclick="search()">検索</button>
+
+<div id="results"></div>
+<div id="map"></div>
+
+<script>
+// ダミー店舗データ（本来はAPI連携で取得）
+const stores = [
+  {
+    name: "文具のたかはし",
+    lat: 35.6895,
+    lng: 139.6917,
+    items: ["黒いボールペン", "赤ペン", "シャーペン"]
+  },
+  {
+    name: "ステーショナリー佐藤",
+    lat: 35.6900,
+    lng: 139.7000,
+    items: ["消しゴム", "黒いボールペン", "ノート"]
+  },
+  {
+    name: "文房具マルエツ",
+    lat: 35.6930,
+    lng: 139.7030,
+    items: ["蛍光ペン", "定規", "鉛筆"]
+  }
+];
+
+let map;
+
+navigator.geolocation.getCurrentPosition(function(pos) {
+  const userLat = pos.coords.latitude;
+  const userLng = pos.coords.longitude;
+
+  map = L.map('map').setView([userLat, userLng], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  L.marker([userLat, userLng])
+    .addTo(map)
+    .bindPopup("あなたの現在地")
+    .openPopup();
+}, function() {
+  alert("現在地を取得できませんでした");
+});
+
+function search() {
+  const keyword = document.getElementById("query").value.trim();
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+
+  if (!map) {
+    alert("地図の読み込みが完了していません");
+    return;
+  }
+
+  stores.forEach(store => {
+    const matchedItems = store.items.filter(item => item.includes(keyword));
+    if (matchedItems.length > 0) {
+      const div = document.createElement("div");
+      div.innerHTML = `<strong>${store.name}</strong><br>販売商品：${matchedItems.join(", ")}`;
+      resultsDiv.appendChild(div);
+
+      L.marker([store.lat, store.lng])
+        .addTo(map)
+        .bindPopup(`<strong>${store.name}</strong><br>${matchedItems.join(", ")}`);
+    }
+  });
+}
+</script>
+
+</body>
+</html>
